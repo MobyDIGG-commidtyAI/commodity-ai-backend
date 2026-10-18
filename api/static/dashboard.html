@@ -51,6 +51,11 @@ dl{display:grid;grid-template-columns:1fr auto;gap:10px 16px;margin:18px 0}dt{co
 .signal{padding-top:14px;border-top:1px solid var(--night-grid)}
 .signal .label{color:var(--blue-300);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.14em}
 .signal strong{display:block;font-size:18px;font-weight:600;color:var(--on-night);margin:4px 0 2px}.signal .small{color:var(--on-night-muted)}
+.news-signal{margin-top:18px;padding-top:14px;border-top:1px solid var(--night-grid)}
+.news-signal .label{color:var(--blue-300);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.14em}
+.news-signal strong{display:block;font-size:18px;font-weight:600;color:var(--on-night);margin:4px 0 2px}.news-signal .small{color:var(--on-night-muted)}
+.news-signal strong.up{color:var(--hot)}.news-signal strong.down{color:var(--signal)}
+.news-list{margin:6px 0 0;padding-left:18px;font-size:14px;color:var(--text)}.news-list li{margin:4px 0}.news-list .meta{color:var(--muted)}
 button,input,select{font:inherit;color:inherit}
 button,select{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 14px;color:var(--ink);font-weight:500}
 button{cursor:pointer;transition:border-color .2s cubic-bezier(.16,1,.3,1),background-color .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}
@@ -103,6 +108,7 @@ footer{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
       <div class="signal"><div class="label">Buying timing</div><strong id="timing-label"></strong><div class="small" id="timing-short"></div></div>
       <div class="signal"><div class="label" id="outlook-kind">Next 90 days</div><strong id="outlook-label"></strong><div class="small" id="outlook-short"></div></div>
     </div>
+    <div class="news-signal" id="news-signal" hidden><div class="label" id="news-kind">News pressure</div><strong id="news-label"></strong><div class="small" id="news-short"></div></div>
     </div>
     <hr>
   </section>
@@ -139,6 +145,7 @@ footer{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
     <h3>Price</h3><p class="note" id="why-price"></p>
     <h3>Timing</h3><p class="note" id="why-timing"></p>
     <h3>Outlook</h3><p class="note" id="why-outlook"></p>
+    <section id="why-news-section" hidden><h3>News</h3><p class="note" id="why-news"></p><ul class="news-list" id="news-evidence"></ul></section>
     <details><summary>Evidence & limitations</summary>
       <dl id="evidence"></dl><ul id="limitations" class="small"></ul>
       <h3>Current reference validation</h3><p class="note" id="reference-validation"></p>

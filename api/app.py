@@ -13,6 +13,7 @@ run: PYTHONPATH=src uvicorn api.app:app --reload
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import pathlib
@@ -49,6 +50,48 @@ _fv: FairValue | None = None
 _fv_signature = None
 _fv_lock = threading.Lock()
 _snapshots = SnapshotStore(DATA_DIR / "assessment_snapshot.json")
+
+
+class JudgeStore:
+    """News price-pressure from commodity-ai-judge (export/judge.json). Optional: absent or invalid -> no card.
+    Reloaded when the file changes; a broken update keeps the last good file."""
+
+    def __init__(self, path: pathlib.Path):
+        self.path, self._data, self._signature, self._lock = path, None, None, threading.Lock()
+
+    def load(self) -> dict | None:
+        with self._lock:
+            try:
+                stat = self.path.stat()
+            except FileNotFoundError:
+                return self._data
+            signature = (stat.st_mtime_ns, stat.st_size)
+            if signature != self._signature:
+                self._signature = signature
+                try:
+                    data = json.loads(self.path.read_text())
+                    if data.get("schema_version") != 1 or not isinstance(data.get("items"), dict):
+                        raise ValueError("unexpected judge.json schema")
+                    self._data = data
+                except Exception as exc:
+                    log.warning("kept the last good judge.json; reload of %s failed (%s: %s)", self.path, type(exc).__name__, exc)
+            return self._data
+
+
+_judge = JudgeStore(DATA_DIR / "judge.json")
+
+
+def news_judge(product: dict | None) -> dict | None:
+    """The judged category for this product: DDR5 RAM or consumer GPU (the rubric is specific to those two)."""
+    data = _judge.load()
+    if not data or not product:
+        return None
+    key = "GPU" if product.get("category") == "GPU" else "DDR5" if product.get("generation") == "DDR5" else None
+    item = data["items"].get(key) if key else None
+    if not item or item.get("status") != "SCORED":
+        return None
+    return {**item, "category": key, "news_month": data.get("news_month"), "generated_at": data.get("generated_at"),
+            "basis": "LLM rubric over this month's news; signed pressure, not a price forecast"}
 
 
 def fv() -> FairValue:
@@ -115,6 +158,7 @@ def assessment(
     if _snapshots.error:
         log.warning("serving the last verified snapshot; newer file rejected: %s", _snapshots.error)
     result["dataset_warning"] = "Showing the last verified dataset; a newer update is being checked." if _snapshots.error else None
+    result["news_judge"] = news_judge(result.get("product"))
     return result
 
 

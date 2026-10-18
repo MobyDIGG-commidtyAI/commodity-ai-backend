@@ -76,3 +76,25 @@ def test_without_data_every_data_endpoint_answers_503(tmp_path, monkeypatch):
     assert client.get("/api/v2/assessment", params={"title": "DDR4 16GB", "price": 1400}).status_code == 503
     assert client.get("/api/series", params={"product": "DDR4"}).status_code == 503
     assert client.get("/api/verdict", params={"title": "DDR5 32GB", "price": 15900}).status_code == 503
+
+
+def test_news_judge_is_attached_only_for_scored_judged_categories(tmp_path, monkeypatch):
+    import json as _json
+    import os
+    import api.app as demo_app
+    judge = {"schema_version": 1, "generated_at": "2026-10-18T03:00:00+00:00", "news_month": "2026-10",
+             "items": {"DDR5": {"status": "SCORED", "direction": "UP", "pressure": 0.62, "articles_judged": 20,
+                                "as_of_month": "2026-10", "target_month": "2026-11", "evidence": []},
+                       "GPU": {"status": "NO_TEXT", "direction": None, "pressure": None, "articles_judged": 0}},
+             "limitations": []}
+    path = tmp_path / "judge.json"
+    path.write_text(_json.dumps(judge))
+    monkeypatch.setattr(demo_app, "_judge", demo_app.JudgeStore(path))
+    assert demo_app.news_judge({"category": "RAM", "generation": "DDR5"})["pressure"] == 0.62
+    assert demo_app.news_judge({"category": "RAM", "generation": "DDR4"}) is None
+    assert demo_app.news_judge({"category": "GPU", "model": "RTX 5070"}) is None
+    path.write_text("{broken")   # a bad update keeps the last good file
+    os.utime(path, ns=(path.stat().st_mtime_ns + 10**9,) * 2)
+    assert demo_app.news_judge({"category": "RAM", "generation": "DDR5"})["direction"] == "UP"
+    monkeypatch.setattr(demo_app, "_judge", demo_app.JudgeStore(tmp_path / "missing.json"))
+    assert demo_app.news_judge({"category": "RAM", "generation": "DDR5"}) is None
