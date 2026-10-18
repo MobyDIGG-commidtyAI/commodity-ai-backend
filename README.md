@@ -40,20 +40,12 @@ Method and limits of the assessment: [docs/assessment-v2.md](docs/assessment-v2.
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
-DATA_DIR=data/export PYTHONPATH=src uvicorn api.app:app --port 8000
+PYTHONPATH=src uvicorn api.app:app --port 8000
 open "http://localhost:8000/dashboard?title=Kingston%20FURY%20Beast%20DDR5%2032GB%20(2x16GB)&price=21900"
 ```
 
-The repo ships **no data**. The API reads the export that commodity-ai-caller publishes to the bucket
-(`price_daily.parquet` and `assessment_snapshot.json`). Locally, copy it and point `DATA_DIR` at it:
-
-```bash
-gcloud storage rsync gs://<PROJECT>-cai-tank/export data/export     # needs read access to the bucket
-DATA_DIR=data/export PYTHONPATH=src uvicorn api.app:app --port 8000
-```
-
-Without data, `/api/health` and every data endpoint answer 503 with the path they looked at; nothing is guessed.
-The API reloads the files when the refresh job replaces them.
+`data/export/` holds a recent export (price series + assessment snapshot) so the API runs without the bucket.
+Set `DATA_DIR` to read another export; the API reloads it when the files change.
 
 ## Test
 

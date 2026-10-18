@@ -4,9 +4,8 @@
   GET /api/series?product=DDR5|DDR4|GPU  lines for the dashboard
   GET /dashboard?product=...&price=...   the single dashboard page (static, fetches the two endpoints)
 
-Reads only the export that commodity-ai-caller publishes: on Cloud Run DATA_DIR is the bucket mount
-(/mnt/tank/export) and both files reload when the refresh job replaces them. No data ships with this repo; locally
-set DATA_DIR to a copy of the bucket export. Without it every data endpoint answers 503 instead of guessing.
+Reads only the export files (DATA_DIR, default data/export), so the same image runs on Railway, a VPS or
+Cloud Run; on GCP DATA_DIR points at the bucket mount and both files reload when the refresh job replaces them.
 TH_MARKUP sets the Thai-over-US price ratio (uncalibrated, default 1.0). CORS_ORIGINS is a comma-separated
 allow-list; empty (the default) sends no CORS headers, which is all the extension and dashboard need.
 run: PYTHONPATH=src uvicorn api.app:app --reload
@@ -20,7 +19,7 @@ import threading
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 from cai.fairvalue import FairValue
 from cai.product import parse_title
@@ -55,25 +54,19 @@ def fv() -> FairValue:
             signature = (stat.st_mtime_ns, stat.st_size)
             if signature != _fv_signature:
                 _fv, _fv_signature = FairValue(pd.read_parquet(path)), signature
-        except Exception as exc:
+        except Exception:
             if _fv is None:
-                raise HTTPException(503, f"Price data unavailable: no readable price_daily.parquet in DATA_DIR ({DATA_DIR}). "
-                                         "Mount the bucket export or set DATA_DIR.") from exc
+                raise
         return _fv
 
 
 @app.get("/api/health")
-def health():
-    try:
-        f = fv()
-    except HTTPException as exc:
-        return JSONResponse({"ok": False, "error": exc.detail, "data_dir": str(DATA_DIR)}, status_code=503)
+def health() -> dict:
+    f = fv()
     snapshot = _snapshots.load()
-    if not snapshot:
-        return JSONResponse({"ok": False, "error": f"Assessment snapshot unavailable in DATA_DIR ({DATA_DIR}).",
-                             "data_dir": str(DATA_DIR), "assessment_warning": _snapshots.error}, status_code=503)
     return {"ok": True, "chip_last_date": f.chip.index[-1].strftime("%Y-%m-%d"), "markup": TH_MARKUP,
-            "dataset_version": snapshot["dataset_version"], "dataset_asof": snapshot["asof"], "assessment_warning": _snapshots.error,
+            "dataset_version": snapshot["dataset_version"] if snapshot else None,
+            "dataset_asof": snapshot["asof"] if snapshot else None, "assessment_warning": _snapshots.error,
             "models": {g: {"r2": round(m.r2, 3), "lag_weeks": m.lag_weeks, "n_months": m.n} for g, m in f.models.items()}}
 
 
@@ -93,7 +86,7 @@ def assessment(
 ) -> dict:
     snapshot = _snapshots.load()
     if not snapshot:
-        raise HTTPException(503, f"Assessment dataset unavailable: no valid assessment_snapshot.json in DATA_DIR ({DATA_DIR}).")
+        raise HTTPException(503, "Assessment dataset unavailable. Build the local snapshot first.")
     try:
         result = assess(snapshot, title, price, product=product, model=model, capacity_gb=capacity_gb,
                         confirmed=confirmed, ambiguous=ambiguous,
