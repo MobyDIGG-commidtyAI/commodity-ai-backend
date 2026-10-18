@@ -70,7 +70,9 @@ def test_without_data_every_data_endpoint_answers_503(tmp_path, monkeypatch):
     monkeypatch.setattr(demo_app, "_fv_signature", None)
     monkeypatch.setattr(demo_app, "_snapshots", SnapshotStore(tmp_path / "assessment_snapshot.json"))
     health = client.get("/api/health")
-    assert health.status_code == 503 and health.json()["ok"] is False and str(tmp_path) in health.json()["error"]
+    assert health.status_code == 503 and health.json()["ok"] is False and health.json()["data_dir"] == str(tmp_path)
+    page_error = client.get("/api/v2/assessment", params={"title": "DDR4 16GB"}).json()["detail"]
+    assert str(tmp_path) not in page_error and "DATA_DIR" not in page_error   # paths stay in the log
     assert client.get("/api/v2/assessment", params={"title": "DDR4 16GB", "price": 1400}).status_code == 503
     assert client.get("/api/series", params={"product": "DDR4"}).status_code == 503
     assert client.get("/api/verdict", params={"title": "DDR5 32GB", "price": 15900}).status_code == 503
