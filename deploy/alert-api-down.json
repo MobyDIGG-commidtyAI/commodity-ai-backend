@@ -1,0 +1,27 @@
+{
+  "displayName": "commodity-ai: API health check failing",
+  "documentation": {
+    "mimeType": "text/markdown",
+    "content": "`/api/health` has failed from more than one uptime region for 10 minutes. Runbook: README.md in commodity-ai-backend"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "uptime check failing",
+      "conditionThreshold": {
+        "filter": "resource.type = \"uptime_url\" AND metric.type = \"monitoring.googleapis.com/uptime_check/check_passed\" AND metric.labels.check_id = \"__CHECK_ID__\"",
+        "aggregations": [{
+          "alignmentPeriod": "1200s",
+          "perSeriesAligner": "ALIGN_NEXT_OLDER",
+          "crossSeriesReducer": "REDUCE_COUNT_FALSE",
+          "groupByFields": ["resource.labels.host"]
+        }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 1,
+        "duration": "600s",
+        "trigger": {"count": 1}
+      }
+    }
+  ],
+  "alertStrategy": {"autoClose": "1800s"}
+}

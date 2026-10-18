@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price check · Commodity AI</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+:root{--paper:#fbf9f4;--ink:#1f1d1a;--muted:#625d54;--rule:#b9b2a5;--green:#216342;--red:#a42820;--blue:#345c86;--mono:"JetBrains Mono",monospace}
+*{box-sizing:border-box}body{margin:0;padding:38px 16px 60px;background:#d2d6dc;color:var(--ink);font:15px/1.6 system-ui,sans-serif}
+.slip{width:min(740px,100%);margin:auto;background:var(--paper);padding:30px 34px;box-shadow:0 15px 30px -20px #1f1d1a70;position:relative}
+.slip:before,.slip:after{content:"";position:absolute;left:0;right:0;height:7px;background:var(--paper);mask:conic-gradient(from 135deg at top,transparent,#000 1deg 89deg,transparent 90deg) top/12px 100% repeat-x}.slip:before{top:-6px}.slip:after{bottom:-6px;transform:rotate(180deg)}
+header,.heading,.controls,.links{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font:700 12px var(--mono);letter-spacing:.18em}.small,.note{font-size:12px;color:var(--muted)}.note{margin:7px 0}.stamp{font:11px var(--mono)}
+h1{font-size:14px;font-weight:500;color:var(--muted);margin:8px 0 18px}h2{font-size:18px;margin:0 0 10px}h3{font-size:14px;margin:10px 0 5px}.product{font-size:25px;line-height:1.2;font-weight:750;margin-top:15px}.title{overflow-wrap:anywhere;color:var(--muted);font-size:12px;margin:5px 0 16px}
+hr{border:0;border-top:1px dashed var(--rule);margin:22px 0}.word{font-size:clamp(28px,6vw,44px);font-weight:750;line-height:1.15;margin:10px 0}.below{color:var(--green)}.above{color:var(--red)}
+dl{display:grid;grid-template-columns:1fr auto;gap:8px 14px;margin:14px 0}dt{color:var(--muted)}dd{margin:0;text-align:right;font:13px/1.65 var(--mono);overflow-wrap:anywhere;max-width:370px}
+.signals{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:22px 0 0}.signal{border-top:1px dashed var(--rule);padding-top:12px}.signal .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.signal strong{display:block;font-size:16px;margin:4px 0}
+button,input,select{font:inherit;color:inherit}button,select{background:transparent;border:1px solid var(--rule);border-radius:3px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--ink)}button[aria-pressed=true],button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}button:disabled{opacity:.6;cursor:wait}
+input{width:100%;padding:9px;border:1px solid var(--rule);background:#fffdf9;border-radius:3px}select{width:100%}label{font-size:12px;display:block;margin-bottom:4px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.confirm{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:14px 0}.confirm input{width:auto;margin-top:4px}
+.nav{display:flex;gap:6px;flex-wrap:wrap}.nav a{border:1px solid var(--rule);padding:5px 9px;text-decoration:none;color:var(--muted);font:11px var(--mono)}a{color:var(--blue)}a:hover{text-decoration:underline}
+.range{display:flex;gap:5px;flex-wrap:wrap}.controls{justify-content:flex-start;margin:12px 0}.controls label{margin:0 0 0 5px}.controls select{width:auto;padding:6px}
+.chart{position:relative;min-height:130px}.chart svg{width:100%;display:block}.chart text{font-family:system-ui,sans-serif;font-size:11px;fill:var(--muted)}.chart .tooltip{display:none;position:absolute;background:var(--ink);color:var(--paper);font-size:12px;padding:7px 9px;border-radius:3px;pointer-events:none;max-width:230px;z-index:1}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin:6px 0}.key:before{content:"";display:inline-block;width:15px;border-top:2px solid var(--ink);margin-right:5px;vertical-align:middle}.key.forecast:before{border-top:2px dashed var(--blue)}.key.observed:before{width:5px;height:5px;border-radius:50%;background:var(--green);border:0}.key.gap:before{border:0;height:8px;background:#b9b2a560}
+details{margin-top:12px}summary{cursor:pointer;font-weight:600;font-size:13px}.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #b9b2a550}th{color:var(--muted)}.error,.warning{border:1px dashed var(--rule);padding:12px;margin:12px 0;font-size:13px}.error{border-color:var(--red);color:var(--red)}.loading{padding:20px 0;color:var(--muted)}[hidden]{display:none!important}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}footer{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:540px){body{padding:20px 8px}.slip{padding:22px 16px}.signals,.form-grid{grid-template-columns:1fr}.full{grid-column:auto}dd{max-width:200px}button{min-height:40px}.stamp{font-size:10px}}
+</style>
+</head>
+<body>
+<main class="slip">
+  <header><span class="brand">COMMODITY AI</span><span class="stamp" id="today"></span></header>
+  <h1>Your price-check receipt</h1>
+  <nav class="nav" aria-label="Product categories">
+    <a href="?product=DDR4&gb=16">DDR4</a><a href="?product=DDR5&gb=32">DDR5</a>
+    <a href="?product=NVME&gb=1000">NVMe</a><a href="?product=SATA&gb=1000">SATA</a><a href="?product=GPU&model=RX%209070%20XT">GPU</a>
+  </nav>
+  <div class="loading" id="loading" role="status">Fetching price data…</div>
+  <div class="error" id="error" role="alert" hidden></div>
+  <section id="results" hidden>
+    <div class="product" id="product-name"></div><div class="title" id="listing-title"></div>
+    <p class="note" id="selection-note" hidden></p>
+    <hr>
+    <div class="small">01 / PRICE CHECK</div><div class="word" id="verdict"></div>
+    <dl id="prices"></dl><p class="note">US reference converted to THB · Thai-market markup is uncalibrated.</p>
+    <p class="note" id="price-reason"></p>
+    <div class="warning" id="stale-warning" hidden></div>
+    <div class="signals">
+      <div class="signal"><div class="label">Buying timing</div><strong id="timing-label"></strong><div class="small" id="timing-short"></div></div>
+      <div class="signal"><div class="label" id="outlook-kind">Next 90 days</div><strong id="outlook-label"></strong><div class="small" id="outlook-short"></div></div>
+    </div>
+    <hr>
+  </section>
+  <details id="edit"><summary>Confirm product and listing price</summary>
+    <p class="note">Check the selected shop variant. A category reference does not account for every brand, speed, warranty or premium feature.</p>
+    <form id="check-form">
+      <div class="form-grid">
+        <div class="full"><label for="title-input">Listing title</label><input id="title-input" maxlength="500" required></div>
+        <div><label for="kind-input">Product</label><select id="kind-input"><option>DDR4</option><option>DDR5</option><option value="NVME">NVMe SSD</option><option value="SATA">SATA SSD</option><option>GPU</option></select></div>
+        <div id="capacity-field"><label for="capacity-input">Total capacity (GB; 1 TB = 1000 GB)</label><input id="capacity-input" type="number" min="1" max="16000" step="1"></div>
+        <div id="model-field" hidden><label for="model-input">GPU model</label><input id="model-input" maxlength="100" placeholder="RX 9070 XT"></div>
+        <div class="full"><label for="price-input">Your listing price (THB)</label><input id="price-input" type="number" min="0.01" step="0.01" placeholder="Enter price in baht"></div>
+      </div>
+      <label class="confirm"><input id="confirmed-input" type="checkbox" required><span>I checked the selected variant and price. This is a new, standalone product.</span></label>
+      <button class="primary" id="check-btn" type="submit">Update assessment</button>
+    </form>
+  </details>
+  <section id="details" hidden>
+    <hr><div class="small">02 / BUYING TIMING</div>
+    <h2>Seasonal context</h2><p class="note" id="season-reason"></p>
+    <div class="chart" id="season-chart"></div>
+    <p class="note">Detrended historical calendar profile; index 100 is a relative baseline. This is not a forecast of your item's price.</p>
+    <section id="category-context" hidden><h3>Category context only</h3><p class="note">Market index, not a model-level price or a value in THB.</p><div class="chart" id="category-chart"></div></section>
+    <hr><div class="small">03 / HISTORY & OUTLOOK</div>
+    <h2>Price history & next 90 days</h2>
+    <div class="controls">
+      <div class="range" aria-label="History range"><button type="button" data-range="90">3M</button><button type="button" data-range="365" aria-pressed="true">1Y</button><button type="button" data-range="0">All</button></div>
+      <label for="smooth">History</label><select id="smooth"><option value="ema">EMA 30D</option><option value="raw">Raw</option></select>
+    </div>
+    <div class="chart" id="price-chart"></div>
+    <div class="legend"><span class="key">Reference history</span><span class="key observed">Observed quote</span><span class="key forecast" id="forecast-legend">Outlook</span><span class="key gap">Gap over 30 days</span></div>
+    <p class="note" id="forecast-reason"></p>
+    <p class="note">Daily fill and EMA are display aids. Filled values are excluded from forecast evaluation. Historical amounts use the snapshot FX rate, not historical Thai shop prices.</p>
+    <details><summary>Retail and deal channels</summary><p class="note">Different baskets of advertised products, not matched-product savings or completed transactions.</p><div class="chart" id="channels-chart"></div></details>
+    <hr><div class="small">04 / WHY THIS ASSESSMENT</div>
+    <h3>Price</h3><p class="note" id="why-price"></p>
+    <h3>Timing</h3><p class="note" id="why-timing"></p>
+    <h3>Outlook</h3><p class="note" id="why-outlook"></p>
+    <details><summary>Evidence & limitations</summary>
+      <dl id="evidence"></dl><ul id="limitations" class="small"></ul>
+      <h3>Current reference validation</h3><p class="note" id="reference-validation"></p>
+      <h3>Forecast validation</h3><div class="table-scroll"><table><thead><tr><th>Horizon</th><th>Observed tests</th><th>MAE*</th><th>Carry MAE*</th><th>Status</th></tr></thead><tbody id="validation-table"></tbody></table></div>
+      <p class="note">*MAE is in original USD/GB for RAM/SSD or USD/card for GPU. Targets must be observed within ±7 days of each horizon; monthly rolling tests may overlap.</p>
+      <h3>Seasonal validation</h3><p class="note" id="season-validation"></p>
+    </details>
+  </section>
+  <hr><div class="links"><a id="back" href="#" hidden>Back to shop</a><button type="button" id="retry">Refresh evidence</button></div>
+  <hr><footer id="updated">Evidence-based price context · All displayed item prices in THB.</footer>
+</main>
+<script src="/static/assessment.js"></script>
+</body></html>
