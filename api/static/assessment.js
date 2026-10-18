@@ -63,7 +63,7 @@
     add("title",{},season?"Seasonal context":"Price history and next 90 days");
     for(let i=0;i<=4;i++){
       const value=minY+(maxY-minY)*i/4;
-      add("line",{x1:m.l,x2:W-m.r,y1:Y(value),y2:Y(value),stroke:"#b9b2a5","stroke-opacity":".35"});
+      add("line",{x1:m.l,x2:W-m.r,y1:Y(value),y2:Y(value),stroke:"#D5DCE8"});
       add("text",{x:m.l-8,y:Y(value)+4,"text-anchor":"end"},season||unitIndex?value.toFixed(0):"฿"+Math.round(value).toLocaleString("en-GB"));
     }
     const tickCount=W<430?3:5;
@@ -74,7 +74,7 @@
       const label=season?monthNames[t-1]:new Date(t).toLocaleDateString("en-GB",{month:"short",year:"2-digit"});
       add("text",{x:X(t),y:H-12,"text-anchor":i===0?"start":i===ticks.length-1?"end":"middle"},label);
     });
-    if(season&&month)add("line",{x1:X(month),x2:X(month),y1:m.t,y2:H-m.b,stroke:"#345c86","stroke-dasharray":"3 4"});
+    if(season&&month)add("line",{x1:X(month),x2:X(month),y1:m.t,y2:H-m.b,stroke:"#1F4FD8","stroke-dasharray":"3 4"});
     const path=points=>points.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(2)+","+Y(p.y).toFixed(2)).join(" ");
     for(const line of lines){
       const pts=line.points.filter(p=>number(p.y)).sort((a,b)=>a.x-b.x);
@@ -89,7 +89,7 @@
         pts.forEach((p,i)=>{
           if(p.gap&&start===null)start=p.x;
           if(start!==null&&(!p.gap||i===pts.length-1)){
-            add("rect",{x:X(start),y:m.t,width:Math.max(1,X(p.x)-X(start)),height:H-m.t-m.b,fill:"#b9b2a5","fill-opacity":".18"});start=null;
+            add("rect",{x:X(start),y:m.t,width:Math.max(1,X(p.x)-X(start)),height:H-m.t-m.b,fill:"#E8ECF3","fill-opacity":".7"});start=null;
           }
         });
       }
@@ -97,7 +97,7 @@
       for(const p of pts)if(p.observed||season)add("circle",{cx:X(p.x),cy:Y(p.y),r:season?3:2.4,fill:line.color});
     }
     const tooltip=document.createElement("div");tooltip.className="tooltip";tooltip.setAttribute("role","tooltip");root.append(tooltip);
-    const guide=add("line",{x1:0,x2:0,y1:m.t,y2:H-m.b,stroke:"#625d54","stroke-dasharray":"2 4",opacity:0});
+    const guide=add("line",{x1:0,x2:0,y1:m.t,y2:H-m.b,stroke:"#667085","stroke-dasharray":"2 4",opacity:0});
     const hit=add("rect",{x:m.l,y:m.t,width:W-m.l-m.r,height:H-m.t-m.b,fill:"transparent"});
     function details(evt){
       const rect=svg.getBoundingClientRect(),px=(evt.clientX-rect.left)*W/rect.width;
@@ -123,14 +123,14 @@
     const a=assessment,all=a.history||[],last=all.length?Date.parse(all[all.length-1].date):Date.now();
     const history=all.filter(p=>!range||Date.parse(p.date)>=last-range*86400000);
     const smooth=$("smooth").value==="ema";
-    const lines=[{name:smooth?"EMA 30D":"Filled price",color:"#1f1d1a",gaps:true,points:history.map(p=>({x:Date.parse(p.date),y:smooth?p.ema_thb:p.value_thb,gap:p.long_gap,filled:p.filled}))},
-      {name:"Observed",color:"#216342",dotsOnly:true,points:history.filter(p=>p.observed_thb!=null).map(p=>({x:Date.parse(p.date),y:p.observed_thb,observed:true}))}];
-    if(a.outlook.points.length)lines.push({name:a.outlook.status==="scenario"?"Scenario":"Forecast",color:"#345c86",dashed:true,points:a.outlook.points.map(p=>({x:Date.parse(p.date),y:p.value_thb,low:p.low_thb,high:p.high_thb}))});
+    const lines=[{name:smooth?"EMA 30D":"Filled price",color:"#2F6BFF",gaps:true,points:history.map(p=>({x:Date.parse(p.date),y:smooth?p.ema_thb:p.value_thb,gap:p.long_gap,filled:p.filled}))},
+      {name:"Observed",color:"#344054",dotsOnly:true,points:history.filter(p=>p.observed_thb!=null).map(p=>({x:Date.parse(p.date),y:p.observed_thb,observed:true}))}];
+    if(a.outlook.points.length)lines.push({name:a.outlook.status==="scenario"?"Scenario":"Forecast",color:"#1A3A8F",dashed:true,points:a.outlook.points.map(p=>({x:Date.parse(p.date),y:p.value_thb,low:p.low_thb,high:p.high_thb}))});
     chart("price-chart",lines);
-    chart("season-chart",[{name:"Seasonal index",color:"#345c86",points:a.seasonality.profile.map(p=>({x:p.month,y:p.index}))}],{season:true,month:a.seasonality.current_month});
-    const channels=Object.entries(a.channels||{}).map(([name,rows],i)=>({name,color:i?"#345c86":"#216342",points:rows.map(p=>({x:Date.parse(p.date),y:p.value_thb,observed:true}))}));
+    chart("season-chart",[{name:"Seasonal index",color:"#2F6BFF",points:a.seasonality.profile.map(p=>({x:p.month,y:p.index}))}],{season:true,month:a.seasonality.current_month});
+    const channels=Object.entries(a.channels||{}).map(([name,rows],i)=>({name,color:i?"#94A3B8":"#2F6BFF",points:rows.map(p=>({x:Date.parse(p.date),y:p.value_thb,observed:true}))}));
     chart("channels-chart",channels);
-    if(a.category_context)chart("category-chart",[{name:"Market index",color:"#345c86",points:a.category_context.points.map(p=>({x:Date.parse(p.date),y:p.value}))}],{unitIndex:true});
+    if(a.category_context)chart("category-chart",[{name:"Market index",color:"#2F6BFF",points:a.category_context.points.map(p=>({x:Date.parse(p.date),y:p.value}))}],{unitIndex:true});
   }
   function render(a){
     assessment=a;

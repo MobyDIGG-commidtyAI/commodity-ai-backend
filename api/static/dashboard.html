@@ -6,23 +6,80 @@
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="/static/fonts/fonts.css">
 <style>
-:root{--paper:#fbf9f4;--ink:#1f1d1a;--muted:#625d54;--rule:#b9b2a5;--green:#216342;--red:#a42820;--blue:#345c86;--mono:"JetBrains Mono",monospace}
-*{box-sizing:border-box}body{margin:0;padding:38px 16px 60px;background:#d2d6dc;color:var(--ink);font:15px/1.6 system-ui,sans-serif}
-.slip{width:min(740px,100%);margin:auto;background:var(--paper);padding:30px 34px;box-shadow:0 15px 30px -20px #1f1d1a70;position:relative}
-.slip:before,.slip:after{content:"";position:absolute;left:0;right:0;height:7px;background:var(--paper);mask:conic-gradient(from 135deg at top,transparent,#000 1deg 89deg,transparent 90deg) top/12px 100% repeat-x}.slip:before{top:-6px}.slip:after{bottom:-6px;transform:rotate(180deg)}
-header,.heading,.controls,.links{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font:700 12px var(--mono);letter-spacing:.18em}.small,.note{font-size:12px;color:var(--muted)}.note{margin:7px 0}.stamp{font:11px var(--mono)}
-h1{font-size:14px;font-weight:500;color:var(--muted);margin:8px 0 18px}h2{font-size:18px;margin:0 0 10px}h3{font-size:14px;margin:10px 0 5px}.product{font-size:25px;line-height:1.2;font-weight:750;margin-top:15px}.title{overflow-wrap:anywhere;color:var(--muted);font-size:12px;margin:5px 0 16px}
-hr{border:0;border-top:1px dashed var(--rule);margin:22px 0}.word{font-size:clamp(28px,6vw,44px);font-weight:750;line-height:1.15;margin:10px 0}.below{color:var(--green)}.above{color:var(--red)}
-dl{display:grid;grid-template-columns:1fr auto;gap:8px 14px;margin:14px 0}dt{color:var(--muted)}dd{margin:0;text-align:right;font:13px/1.65 var(--mono);overflow-wrap:anywhere;max-width:370px}
-.signals{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:22px 0 0}.signal{border-top:1px dashed var(--rule);padding-top:12px}.signal .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}.signal strong{display:block;font-size:16px;margin:4px 0}
-button,input,select{font:inherit;color:inherit}button,select{background:transparent;border:1px solid var(--rule);border-radius:3px;padding:7px 10px}button{cursor:pointer}button:hover{border-color:var(--ink)}button[aria-pressed=true],button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}button:disabled{opacity:.6;cursor:wait}
-input{width:100%;padding:9px;border:1px solid var(--rule);background:#fffdf9;border-radius:3px}select{width:100%}label{font-size:12px;display:block;margin-bottom:4px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.confirm{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:14px 0}.confirm input{width:auto;margin-top:4px}
-.nav{display:flex;gap:6px;flex-wrap:wrap}.nav a{border:1px solid var(--rule);padding:5px 9px;text-decoration:none;color:var(--muted);font:11px var(--mono)}a{color:var(--blue)}a:hover{text-decoration:underline}
-.range{display:flex;gap:5px;flex-wrap:wrap}.controls{justify-content:flex-start;margin:12px 0}.controls label{margin:0 0 0 5px}.controls select{width:auto;padding:6px}
-.chart{position:relative;min-height:130px}.chart svg{width:100%;display:block}.chart text{font-family:system-ui,sans-serif;font-size:11px;fill:var(--muted)}.chart .tooltip{display:none;position:absolute;background:var(--ink);color:var(--paper);font-size:12px;padding:7px 9px;border-radius:3px;pointer-events:none;max-width:230px;z-index:1}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin:6px 0}.key:before{content:"";display:inline-block;width:15px;border-top:2px solid var(--ink);margin-right:5px;vertical-align:middle}.key.forecast:before{border-top:2px dashed var(--blue)}.key.observed:before{width:5px;height:5px;border-radius:50%;background:var(--green);border:0}.key.gap:before{border:0;height:8px;background:#b9b2a560}
-details{margin-top:12px}summary{cursor:pointer;font-weight:600;font-size:13px}.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #b9b2a550}th{color:var(--muted)}.error,.warning{border:1px dashed var(--rule);padding:12px;margin:12px 0;font-size:13px}.error{border-color:var(--red);color:var(--red)}.loading{padding:20px 0;color:var(--muted)}[hidden]{display:none!important}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}footer{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
-@media(max-width:540px){body{padding:20px 8px}.slip{padding:22px 16px}.signals,.form-grid{grid-template-columns:1fr}.full{grid-column:auto}dd{max-width:200px}button{min-height:40px}.stamp{font-size:10px}}
+:root{
+  --bg:#F3F5F9;--card:#FBFCFE;--panel:#E8ECF3;--border:#DCE3EE;--line:#D9DFEA;--grid:#D5DCE8;
+  --ink:#0B1220;--body:#344054;--text:#475467;--muted:#667085;--faint:#98A2B3;
+  --blue:#2F6BFF;--blue-text:#1F4FD8;--blue-800:#1A3A8F;--blue-100:#DCE7FF;
+  --night:#0A1020;--night-border:#1E2A44;--night-grid:#24304A;--on-night:#F5F8FD;--on-night-2:#C9D3E3;--on-night-muted:#A3AEC2;--signal:#5B93FF;--blue-300:#8DB5FF;
+  --hot:#FF8A80;--danger:#B42318;
+  --font:"Prompt",system-ui,sans-serif;
+  color-scheme:light;accent-color:var(--blue);
+}
+*{box-sizing:border-box}
+html{scrollbar-color:#C3CEDF var(--bg)}
+body{margin:0;padding:48px 16px 72px;color:var(--text);font:400 16px/1.55 var(--font);font-variant-numeric:tabular-nums;caret-color:var(--blue);
+  background:radial-gradient(circle at 100% 0%,rgba(47,107,255,.12) 0%,rgba(243,245,249,0) 45%) fixed,var(--bg)}
+::selection{background:var(--blue-100);color:var(--ink)}
+.slip{width:min(760px,100%);margin:auto;background:var(--card);border:1px solid var(--border);border-radius:28px;padding:36px 40px 32px;box-shadow:0 20px 60px rgba(15,35,80,.10)}
+header,.heading,.controls,.links{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:14px;letter-spacing:.2em;color:var(--ink)}
+.brand:before{content:"";width:10px;height:10px;border-radius:3px;background:var(--blue);box-shadow:0 2px 8px rgba(47,107,255,.45)}
+.stamp{font-size:14px;color:var(--muted)}
+.small,.note{font-size:14px;color:var(--muted)}.note{margin:8px 0;max-width:68ch}
+h1{font-size:32px;line-height:1.15;font-weight:600;letter-spacing:-.02em;color:var(--ink);margin:22px 0 18px}
+h2{font-size:24px;line-height:1.2;font-weight:600;letter-spacing:-.015em;color:var(--ink);margin:0 0 8px}
+h3{font-size:16px;font-weight:600;color:var(--ink);margin:18px 0 4px}
+.product{font-size:26px;line-height:1.2;font-weight:700;letter-spacing:-.015em;color:var(--ink);margin-top:22px}
+.title{overflow-wrap:anywhere;color:var(--muted);font-size:14px;margin:6px 0 18px}
+hr{border:0;border-top:1px solid var(--border);margin:30px 0}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.nav a{border:1px solid var(--line);border-radius:999px;padding:6px 14px;text-decoration:none;color:var(--body);font-size:14px;font-weight:500;background:var(--card);transition:border-color .2s cubic-bezier(.16,1,.3,1),color .2s cubic-bezier(.16,1,.3,1)}
+.nav a:hover{border-color:var(--blue);color:var(--blue-text);text-decoration:none}
+a{color:var(--blue-text);text-underline-offset:3px}a:hover{text-decoration:underline}
+/* the verdict: the one thing to remember, on the dark surface */
+.verdict-card{position:relative;overflow:hidden;margin:4px 0 0;padding:28px 30px 26px;border-radius:24px;border:1px solid var(--night-border);color:var(--on-night-2);
+  background:radial-gradient(circle at 88% 0%,rgba(47,107,255,.42) 0%,rgba(47,107,255,.10) 32%,rgba(10,16,32,0) 58%),
+    repeating-linear-gradient(0deg,rgba(91,147,255,.07) 0 1px,transparent 1px 40px),repeating-linear-gradient(90deg,rgba(91,147,255,.07) 0 1px,transparent 1px 40px),
+    linear-gradient(160deg,var(--night) 55%,#13234D);
+  box-shadow:0 30px 70px -20px rgba(7,11,20,.55),inset 0 1px 0 rgba(255,255,255,.06)}
+.verdict-card .note{color:var(--on-night-muted)}
+.word{font-size:clamp(34px,6.4vw,52px);font-weight:700;line-height:1.08;letter-spacing:-.03em;margin:0 0 6px;color:var(--on-night)}
+.word.below{color:var(--signal)}.word.above{color:var(--hot)}
+dl{display:grid;grid-template-columns:1fr auto;gap:10px 16px;margin:18px 0}dt{color:var(--muted)}dd{margin:0;text-align:right;color:var(--ink);font-weight:500;overflow-wrap:anywhere;max-width:380px}
+.verdict-card dl{padding-top:16px;border-top:1px solid var(--night-grid)}.verdict-card dt{color:var(--on-night-muted)}.verdict-card dd{color:var(--on-night)}
+.signals{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:18px 0 0}
+.signal{padding-top:14px;border-top:1px solid var(--night-grid)}
+.signal .label{color:var(--blue-300);font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.14em}
+.signal strong{display:block;font-size:18px;font-weight:600;color:var(--on-night);margin:4px 0 2px}.signal .small{color:var(--on-night-muted)}
+button,input,select{font:inherit;color:inherit}
+button,select{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 14px;color:var(--ink);font-weight:500}
+button{cursor:pointer;transition:border-color .2s cubic-bezier(.16,1,.3,1),background-color .2s cubic-bezier(.16,1,.3,1),box-shadow .2s cubic-bezier(.16,1,.3,1)}
+button:hover{border-color:var(--blue)}
+button[aria-pressed=true],button.primary{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 8px 20px -8px rgba(47,107,255,.65)}
+button.primary:hover{background:#1F4FD8;border-color:#1F4FD8}
+button:disabled{opacity:.55;cursor:wait}
+input{width:100%;padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:12px;color:var(--ink)}
+input::placeholder{color:var(--muted)}select{width:100%}
+label{font-size:14px;font-weight:500;color:var(--body);display:block;margin-bottom:6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.full{grid-column:1/-1}
+.confirm{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:400;margin:16px 0}.confirm input{width:auto;margin-top:5px}
+.range{display:flex;gap:6px;flex-wrap:wrap}.controls{justify-content:flex-start;margin:14px 0}.controls label{margin:0 0 0 6px}.controls select{width:auto;padding:7px 12px}
+.chart{position:relative;min-height:130px;margin-top:8px}.chart svg{width:100%;display:block}.chart text{font-family:var(--font);font-size:11px;fill:var(--muted)}
+.chart .tooltip{display:none;position:absolute;background:var(--night);color:#EEF2F8;font-size:13px;padding:8px 11px;border-radius:10px;pointer-events:none;max-width:240px;z-index:1;box-shadow:0 12px 30px -10px rgba(7,11,20,.5)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:8px 0}
+.key:before{content:"";display:inline-block;width:16px;border-top:2px solid var(--blue);margin-right:6px;vertical-align:middle}
+.key.forecast:before{border-top:2px dashed var(--blue-800)}.key.observed:before{width:6px;height:6px;border-radius:50%;background:var(--body);border:0}.key.gap:before{border:0;height:9px;background:var(--panel)}
+details{margin-top:14px}summary{cursor:pointer;font-weight:600;font-size:15px;color:var(--ink)}summary::marker{color:var(--blue)}
+.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--panel)}th{color:var(--muted);font-weight:500}
+.error,.warning{border-radius:14px;padding:12px 14px;margin:14px 0;font-size:14px}
+.error{border:1px solid #F4C7C3;background:#FFF5F4;color:var(--danger)}
+.warning{border:1px solid var(--line);background:var(--panel);color:var(--body)}
+.verdict-card .warning{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:var(--on-night-2)}
+.loading{padding:22px 0;color:var(--muted)}[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+footer{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:560px){body{padding:20px 10px 48px}.slip{padding:24px 18px;border-radius:22px}.verdict-card{padding:22px 18px;border-radius:20px}h1{font-size:26px}.signals,.form-grid{grid-template-columns:1fr}.signals{gap:14px}.full{grid-column:auto}dd{max-width:200px}button{min-height:42px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -38,14 +95,14 @@ details{margin-top:12px}summary{cursor:pointer;font-weight:600;font-size:13px}.t
   <section id="results" hidden>
     <div class="product" id="product-name"></div><div class="title" id="listing-title"></div>
     <p class="note" id="selection-note" hidden></p>
-    <hr>
-    <div class="small">01 / PRICE CHECK</div><div class="word" id="verdict"></div>
+    <div class="verdict-card"><div class="word" id="verdict"></div>
     <dl id="prices"></dl><p class="note">US reference converted to THB · Thai-market markup is uncalibrated.</p>
     <p class="note" id="price-reason"></p>
     <div class="warning" id="stale-warning" hidden></div>
     <div class="signals">
       <div class="signal"><div class="label">Buying timing</div><strong id="timing-label"></strong><div class="small" id="timing-short"></div></div>
       <div class="signal"><div class="label" id="outlook-kind">Next 90 days</div><strong id="outlook-label"></strong><div class="small" id="outlook-short"></div></div>
+    </div>
     </div>
     <hr>
   </section>
@@ -64,13 +121,11 @@ details{margin-top:12px}summary{cursor:pointer;font-weight:600;font-size:13px}.t
     </form>
   </details>
   <section id="details" hidden>
-    <hr><div class="small">02 / BUYING TIMING</div>
-    <h2>Seasonal context</h2><p class="note" id="season-reason"></p>
+    <hr><h2>Seasonal context</h2><p class="note" id="season-reason"></p>
     <div class="chart" id="season-chart"></div>
     <p class="note">Detrended historical calendar profile; index 100 is a relative baseline. This is not a forecast of your item's price.</p>
     <section id="category-context" hidden><h3>Category context only</h3><p class="note">Market index, not a model-level price or a value in THB.</p><div class="chart" id="category-chart"></div></section>
-    <hr><div class="small">03 / HISTORY & OUTLOOK</div>
-    <h2>Price history & next 90 days</h2>
+    <hr><h2>Price history & next 90 days</h2>
     <div class="controls">
       <div class="range" aria-label="History range"><button type="button" data-range="90">3M</button><button type="button" data-range="365" aria-pressed="true">1Y</button><button type="button" data-range="0">All</button></div>
       <label for="smooth">History</label><select id="smooth"><option value="ema">EMA 30D</option><option value="raw">Raw</option></select>
@@ -80,7 +135,7 @@ details{margin-top:12px}summary{cursor:pointer;font-weight:600;font-size:13px}.t
     <p class="note" id="forecast-reason"></p>
     <p class="note">Daily fill and EMA are display aids. Filled values are excluded from forecast evaluation. Historical amounts use the snapshot FX rate, not historical Thai shop prices.</p>
     <details><summary>Retail and deal channels</summary><p class="note">Different baskets of advertised products, not matched-product savings or completed transactions.</p><div class="chart" id="channels-chart"></div></details>
-    <hr><div class="small">04 / WHY THIS ASSESSMENT</div>
+    <hr><h2>Why this assessment</h2>
     <h3>Price</h3><p class="note" id="why-price"></p>
     <h3>Timing</h3><p class="note" id="why-timing"></p>
     <h3>Outlook</h3><p class="note" id="why-outlook"></p>
