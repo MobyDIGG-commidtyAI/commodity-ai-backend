@@ -22,7 +22,7 @@ TH_MARKUP=${TH_MARKUP:-1.0}
 CORS_ORIGINS=${CORS_ORIGINS:-}          # empty: no CORS headers (the extension does not need them)
 HTTPS_PROXY_SECRET=${HTTPS_PROXY_SECRET:-}   # Secret Manager secret holding a proxy URL for collectors blocked on GCP IPs
 ALERT_EMAIL=${ALERT_EMAIL:-}
-TAG=${TAG:-$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- . ':!data/export' || echo -dirty)}
+TAG=${TAG:-$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- . || echo -dirty)}
 
 IMAGE=$REGION-docker.pkg.dev/$PROJECT/$REPO/commodity-ai-backend:$TAG
 API_SA=cai-api@$PROJECT.iam.gserviceaccount.com

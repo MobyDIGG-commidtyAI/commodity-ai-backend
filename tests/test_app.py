@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from api.app import app
@@ -42,7 +44,7 @@ def test_model_reloads_when_export_is_replaced(tmp_path, monkeypatch):
     import pandas as pd
     import api.app as demo_app
 
-    full = pd.read_parquet(demo_app.ROOT / "data" / "export" / "price_daily.parquet")
+    full = pd.read_parquet(Path(__file__).resolve().parent / "fixtures" / "export" / "price_daily.parquet")
     monkeypatch.setattr(demo_app, "DATA_DIR", tmp_path)
     monkeypatch.setattr(demo_app, "_fv", None)
     monkeypatch.setattr(demo_app, "_fv_signature", None)
@@ -58,3 +60,17 @@ def test_model_reloads_when_export_is_replaced(tmp_path, monkeypatch):
     path.write_bytes(b"not parquet")   # a broken upload keeps serving the last good model
     os.utime(path, ns=(path.stat().st_mtime_ns + 2 * 10**9,) * 2)
     assert client.get("/api/health").status_code == 200
+
+
+def test_without_data_every_data_endpoint_answers_503(tmp_path, monkeypatch):
+    import api.app as demo_app
+    from cai.assessment import SnapshotStore
+    monkeypatch.setattr(demo_app, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(demo_app, "_fv", None)
+    monkeypatch.setattr(demo_app, "_fv_signature", None)
+    monkeypatch.setattr(demo_app, "_snapshots", SnapshotStore(tmp_path / "assessment_snapshot.json"))
+    health = client.get("/api/health")
+    assert health.status_code == 503 and health.json()["ok"] is False and str(tmp_path) in health.json()["error"]
+    assert client.get("/api/v2/assessment", params={"title": "DDR4 16GB", "price": 1400}).status_code == 503
+    assert client.get("/api/series", params={"product": "DDR4"}).status_code == 503
+    assert client.get("/api/verdict", params={"title": "DDR5 32GB", "price": 15900}).status_code == 503
