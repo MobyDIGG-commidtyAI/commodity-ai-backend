@@ -1,5 +1,12 @@
 .git
 .venv
+.conda
+.env
+.env.*
+.DS_Store
+data
+dist
+*.log
 .github
 tests
 docs

@@ -38,8 +38,11 @@ Method and limits of the assessment: [docs/assessment-v2.md](docs/assessment-v2.
 ## Run locally
 
 ```bash
-python3.12 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+conda create --yes --prefix ./.conda/codex/dev python=3.12
+UV="$(command -v uv)"
+source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate "./.conda/codex/dev"
+"$UV" export --locked --group dev --no-hashes --no-emit-project | \
+  "$UV" pip sync --python "$CONDA_PREFIX/bin/python" -r -
 DATA_DIR=data/export PYTHONPATH=src uvicorn api.app:app --port 8000
 open "http://localhost:8000/dashboard?title=Kingston%20FURY%20Beast%20DDR5%2032GB%20(2x16GB)&price=21900"
 ```
@@ -60,6 +63,16 @@ The API reloads the files when the refresh job replaces them.
 ```bash
 python -m pytest -q
 ```
+
+## Versioning and image builds
+
+`pyproject.toml` holds the application version and pinned direct dependencies. `uv.lock`
+locks the full dependency graph. After changing dependencies, run `uv lock`, install in the
+local Conda environment, and run the tests. The Docker image uses `uv venv` and
+`uv sync --locked --no-dev` to install runtime dependencies only; its uv cache mount speeds
+rebuilds, while application-only edits reuse the dependency layer. Build with
+`docker build -t commodity-ai-backend:0.1.0 .` (replace the tag with the version in
+`pyproject.toml`). The deploy script tags images with the application version and Git commit.
 
 The Python/JS parser parity test runs when a checkout of commodity-ai-extension sits next to this repo
 (or `EXTENSION_DIR` points at its `extension/` folder); otherwise it is skipped.

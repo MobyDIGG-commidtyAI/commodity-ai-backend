@@ -17,12 +17,13 @@ SERVICE=${SERVICE:-cai-api}
 JOB=${JOB:-cai-refresh}
 SCHEDULE=${SCHEDULE:-0 9 * * *}
 TIME_ZONE=${TIME_ZONE:-Asia/Bangkok}
-MIN_INSTANCES=${MIN_INSTANCES:-0}      # 1 removes cold starts (~870 MB image) for about US$10-15/month
+MIN_INSTANCES=${MIN_INSTANCES:-0}      # 1 keeps an instance warm to reduce cold starts
 TH_MARKUP=${TH_MARKUP:-1.0}
 CORS_ORIGINS=${CORS_ORIGINS:-}          # empty: no CORS headers (the extension does not need them)
 HTTPS_PROXY_SECRET=${HTTPS_PROXY_SECRET:-}   # Secret Manager secret holding a proxy URL for collectors blocked on GCP IPs
 ALERT_EMAIL=${ALERT_EMAIL:-}
-TAG=${TAG:-$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- . || echo -dirty)}
+VERSION=$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+TAG=${TAG:-$VERSION-$(git rev-parse --short HEAD)$(git diff --quiet HEAD -- . || echo -dirty)}
 
 IMAGE=$REGION-docker.pkg.dev/$PROJECT/$REPO/commodity-ai-backend:$TAG
 API_SA=cai-api@$PROJECT.iam.gserviceaccount.com
