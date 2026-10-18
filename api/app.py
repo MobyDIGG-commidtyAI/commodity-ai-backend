@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import pathlib
 import threading
+import tomllib
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
@@ -32,7 +33,7 @@ TH_MARKUP = float(os.environ.get("TH_MARKUP", "1.0"))
 CORS_ORIGINS = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 STATIC = pathlib.Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="Commodity AI demo", docs_url="/api/docs")
+app = FastAPI(title="Commodity AI demo", version=tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"], docs_url="/api/docs")
 # The extension calls the API from its service worker (host_permissions, exempt from CORS) and the dashboard
 # is same-origin, so CORS is opt-in for other web clients only.
 if CORS_ORIGINS:
