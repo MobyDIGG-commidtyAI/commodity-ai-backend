@@ -13,6 +13,8 @@ run: PYTHONPATH=src uvicorn api.app:app --reload
 """
 from __future__ import annotations
 
+import json
+import logging
 import os
 import pathlib
 import threading
@@ -26,6 +28,11 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from cai.fairvalue import FairValue
 from cai.product import parse_title
 from cai.assessment import SnapshotStore, assess
+
+# Details go to the server log (Cloud Run Logging); visitors get a short message.
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("cai.api")
+UNAVAILABLE = "Price data is updating. Please try again in a few minutes."
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DATA_DIR = pathlib.Path(os.environ.get("DATA_DIR", ROOT / "data" / "export"))
@@ -45,6 +52,48 @@ _fv_lock = threading.Lock()
 _snapshots = SnapshotStore(DATA_DIR / "assessment_snapshot.json")
 
 
+class JudgeStore:
+    """News price-pressure from commodity-ai-judge (export/judge.json). Optional: absent or invalid -> no card.
+    Reloaded when the file changes; a broken update keeps the last good file."""
+
+    def __init__(self, path: pathlib.Path):
+        self.path, self._data, self._signature, self._lock = path, None, None, threading.Lock()
+
+    def load(self) -> dict | None:
+        with self._lock:
+            try:
+                stat = self.path.stat()
+            except FileNotFoundError:
+                return self._data
+            signature = (stat.st_mtime_ns, stat.st_size)
+            if signature != self._signature:
+                self._signature = signature
+                try:
+                    data = json.loads(self.path.read_text())
+                    if data.get("schema_version") != 1 or not isinstance(data.get("items"), dict):
+                        raise ValueError("unexpected judge.json schema")
+                    self._data = data
+                except Exception as exc:
+                    log.warning("kept the last good judge.json; reload of %s failed (%s: %s)", self.path, type(exc).__name__, exc)
+            return self._data
+
+
+_judge = JudgeStore(DATA_DIR / "judge.json")
+
+
+def news_judge(product: dict | None) -> dict | None:
+    """The judged category for this product: DDR5 RAM or consumer GPU (the rubric is specific to those two)."""
+    data = _judge.load()
+    if not data or not product:
+        return None
+    key = "GPU" if product.get("category") == "GPU" else "DDR5" if product.get("generation") == "DDR5" else None
+    item = data["items"].get(key) if key else None
+    if not item or item.get("status") != "SCORED":
+        return None
+    return {**item, "category": key, "news_month": data.get("news_month"), "generated_at": data.get("generated_at"),
+            "basis": "LLM rubric over this month's news; signed pressure, not a price forecast"}
+
+
 def fv() -> FairValue:
     """Fair-value model, refitted when the refresh job replaces price_daily.parquet (same check as SnapshotStore).
     A file that fails to load keeps the last good model."""
@@ -58,21 +107,24 @@ def fv() -> FairValue:
                 _fv, _fv_signature = FairValue(pd.read_parquet(path)), signature
         except Exception as exc:
             if _fv is None:
-                raise HTTPException(503, f"Price data unavailable: no readable price_daily.parquet in DATA_DIR ({DATA_DIR}). "
-                                         "Mount the bucket export or set DATA_DIR.") from exc
+                log.error("price data unavailable: no readable price_daily.parquet in DATA_DIR=%s (%s: %s)",
+                          DATA_DIR, type(exc).__name__, exc)
+                raise HTTPException(503, UNAVAILABLE) from exc
+            log.warning("kept the last good price model; reload of %s failed (%s: %s)", path, type(exc).__name__, exc)
         return _fv
 
 
 @app.get("/api/health")
 def health():
+    # Deployer check: ok + dataset_version when the bucket export is connected; details are in the log.
     try:
         f = fv()
-    except HTTPException as exc:
-        return JSONResponse({"ok": False, "error": exc.detail, "data_dir": str(DATA_DIR)}, status_code=503)
+    except HTTPException:
+        return JSONResponse({"ok": False, "error": "price data not connected", "data_dir": str(DATA_DIR)}, status_code=503)
     snapshot = _snapshots.load()
     if not snapshot:
-        return JSONResponse({"ok": False, "error": f"Assessment snapshot unavailable in DATA_DIR ({DATA_DIR}).",
-                             "data_dir": str(DATA_DIR), "assessment_warning": _snapshots.error}, status_code=503)
+        log.error("assessment snapshot unavailable in DATA_DIR=%s: %s", DATA_DIR, _snapshots.error)
+        return JSONResponse({"ok": False, "error": "assessment snapshot not connected", "data_dir": str(DATA_DIR)}, status_code=503)
     return {"ok": True, "chip_last_date": f.chip.index[-1].strftime("%Y-%m-%d"), "markup": TH_MARKUP,
             "dataset_version": snapshot["dataset_version"], "dataset_asof": snapshot["asof"], "assessment_warning": _snapshots.error,
             "models": {g: {"r2": round(m.r2, 3), "lag_weeks": m.lag_weeks, "n_months": m.n} for g, m in f.models.items()}}
@@ -94,7 +146,8 @@ def assessment(
 ) -> dict:
     snapshot = _snapshots.load()
     if not snapshot:
-        raise HTTPException(503, f"Assessment dataset unavailable: no valid assessment_snapshot.json in DATA_DIR ({DATA_DIR}).")
+        log.error("assessment unavailable: no valid assessment_snapshot.json in DATA_DIR=%s (%s)", DATA_DIR, _snapshots.error)
+        raise HTTPException(503, UNAVAILABLE)
     try:
         result = assess(snapshot, title, price, product=product, model=model, capacity_gb=capacity_gb,
                         confirmed=confirmed, ambiguous=ambiguous,
@@ -102,7 +155,10 @@ def assessment(
                         variant_title=variant_title, variant_label=variant_label)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
-    result["dataset_warning"] = _snapshots.error
+    if _snapshots.error:
+        log.warning("serving the last verified snapshot; newer file rejected: %s", _snapshots.error)
+    result["dataset_warning"] = "Showing the last verified dataset; a newer update is being checked." if _snapshots.error else None
+    result["news_judge"] = news_judge(result.get("product"))
     return result
 
 

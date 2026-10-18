@@ -132,6 +132,24 @@
     chart("channels-chart",channels);
     if(a.category_context)chart("category-chart",[{name:"Market index",color:"#2F6BFF",points:a.category_context.points.map(p=>({x:Date.parse(p.date),y:p.value}))}],{unitIndex:true});
   }
+  // News pressure from the daily judge job (optional): signed LLM rubric score, shown as context, not a forecast.
+  function renderNews(n){
+    const show=!!(n&&n.status==="SCORED");
+    $("news-signal").hidden=!show;$("why-news-section").hidden=!show;
+    if(!show)return;
+    const month=n.news_month?new Date(n.news_month+"-01T00:00:00").toLocaleDateString("en-GB",{month:"short",year:"numeric"}):"this month";
+    const label=n.direction==="UP"?"Upward pressure":n.direction==="DOWN"?"Downward pressure":"No clear pressure";
+    text("news-kind","News pressure · "+(n.category==="GPU"?"GPU":"DDR5")+" news, "+month);
+    text("news-label",label);$("news-label").className=n.direction==="UP"?"up":n.direction==="DOWN"?"down":"";
+    const score=(n.pressure>0?"+":"")+Number(n.pressure).toFixed(2);
+    text("news-short","Score "+score+" from "+n.articles_judged+" "+(n.category==="GPU"?"articles":"headlines")+" · context, not a price forecast");
+    text("why-news",label+" (score "+score+") for "+(n.target_month||"next month")+", from an LLM rubric over "+n.articles_judged+" "+(n.category==="GPU"?"dated articles":"headlines")+" (supply, demand, disruption, scope, duration, certainty). Backtests do not yet show predictive accuracy, so it does not change the verdict.");
+    $("news-evidence").replaceChildren(...(n.evidence||[]).filter(x=>x.title).map(x=>{
+      const li=document.createElement("li"),safe=/^https?:\/\//i.test(x.url||""),link=document.createElement(safe?"a":"span");
+      link.textContent=x.title;if(safe){link.href=x.url;link.target="_blank";link.rel="noopener noreferrer";}
+      const meta=document.createElement("span");meta.className="meta";meta.textContent=" · "+[x.source,x.date].filter(Boolean).join(", ");
+      li.append(link,meta);return li;}));
+  }
   function render(a){
     assessment=a;
     const p=a.product,e=a.evidence,r=a.price_assessment,o=a.outlook,s=a.seasonality;
@@ -145,6 +163,7 @@
     text("season-reason",s.reason);text("why-price",r.reason);
     text("why-timing",s.reason+" "+(s.status==="supported"?"The current month is compared with the lowest and highest thirds of the supported profile.":"Historical curves alone do not establish a reliable buying season."));
     text("why-outlook",o.reason+" "+(o.fx_assumption||""));
+    renderNews(a.news_judge);
     text("forecast-reason",o.reason+". "+(o.interval_kind||"")+" · "+(o.fx_assumption||"")+" "+(o.price_basis||""));
     text("forecast-legend",o.status==="scenario"?"Illustrative scenario":o.status==="validated_forecast"?"Forecast":"Outlook unavailable");
     list("evidence",[["Last observed",date(e.last_observed_date)],["Observation age",e.age_days==null?"Unknown":e.age_days+" days"],["Confidence",e.confidence],["Observed days",e.observed_days],["Filled history",e.filled_share_pct==null?"Unavailable":e.filled_share_pct+"%"],["Sources",(e.sources||[]).join(", ")||"None"],["FX rate",e.fx_rate==null?"Unavailable":"1 USD = ฿"+e.fx_rate.toFixed(3)],["FX observed",date(e.fx_date)],["Title origin",a.product_match.title_source],["Price origin",a.product_match.price_source]]);
