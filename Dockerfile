@@ -1,13 +1,11 @@
-# syntax=docker/dockerfile:1
 # The API reads its data from a Cloud Run bucket mount; no dataset is baked into the image.
 FROM python:3.12.10-slim-bookworm AS builder
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /bin/
 WORKDIR /app
 ENV UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv venv /app/.venv --python /usr/local/bin/python && \
-    uv sync --locked --no-dev --no-install-project
+RUN uv venv /app/.venv --python /usr/local/bin/python && \
+    uv sync --locked --no-dev --no-install-project --no-cache
 
 FROM python:3.12.10-slim-bookworm
 WORKDIR /app

@@ -69,8 +69,9 @@ python -m pytest -q
 `pyproject.toml` holds the application version and pinned direct dependencies. `uv.lock`
 locks the full dependency graph. After changing dependencies, run `uv lock`, install in the
 local Conda environment, and run the tests. The Docker image uses `uv venv` and
-`uv sync --locked --no-dev` to install runtime dependencies only; its uv cache mount speeds
-rebuilds, while application-only edits reuse the dependency layer. Build with
+`uv sync --locked --no-dev` to install runtime dependencies only. Application-only edits
+reuse the dependency layer on builders with a layer cache. The Dockerfile also works with
+Cloud Build's classic Docker builder. Build with
 `docker build -t commodity-ai-backend:0.1.0 .` (replace the tag with the version in
 `pyproject.toml`). The deploy script tags images with the application version and Git commit.
 
